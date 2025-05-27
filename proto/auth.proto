@@ -1,0 +1,31 @@
+syntax = "proto3";
+option go_package = "github.com/mos1rain/forum_go/proto;auth";
+
+package auth;
+
+service AuthService {
+  rpc ValidateToken (ValidateTokenRequest) returns (ValidateTokenResponse);
+  rpc GetUserByID (GetUserByIDRequest) returns (GetUserByIDResponse);
+}
+
+message ValidateTokenRequest {
+  string token = 1;
+}
+
+message ValidateTokenResponse {
+  int32 user_id = 1;
+  string username = 2;
+  bool valid = 3;
+  string error = 4;
+}
+
+message GetUserByIDRequest {
+  int32 user_id = 1;
+}
+
+message GetUserByIDResponse {
+  int32 user_id = 1;
+  string username = 2;
+  string email = 3;
+  string error = 4;
+} 
