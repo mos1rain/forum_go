@@ -12,12 +12,14 @@ var (
 	ErrInvalidUserID = errors.New("invalid user ID")
 )
 
+// Message represents a chat message
+// @Description Chat message information
 type Message struct {
-	ID        int
-	UserID    int
-	Username  string
-	Content   string
-	CreatedAt time.Time
+	ID        int       `json:"id" example:"1"`
+	UserID    int       `json:"user_id" example:"1"`
+	Username  string    `json:"username" example:"john_doe"`
+	Content   string    `json:"content" example:"Hello, world!"`
+	CreatedAt time.Time `json:"created_at" example:"2024-03-20T10:00:00Z"`
 }
 
 type ChatService struct {
@@ -44,7 +46,7 @@ func (c *ChatService) AddMessage(userID int, username, content string) (Message,
 	var msg Message
 	query := `
 		INSERT INTO chat_messages (user_id, username, content)
-		VALUES ($1, $2, $3)
+		VALUES (?, ?, ?)
 		RETURNING id, user_id, username, content, created_at
 	`
 	err := c.db.QueryRow(query, userID, username, content).Scan(
@@ -66,7 +68,7 @@ func (c *ChatService) GetHistory(limit int) ([]Message, error) {
 		SELECT id, user_id, username, content, created_at
 		FROM chat_messages
 		ORDER BY created_at ASC
-		LIMIT $1
+		LIMIT ?
 	`
 	rows, err := c.db.Query(query, limit)
 	if err != nil {
@@ -96,7 +98,7 @@ func (c *ChatService) DeleteMessage(id int) error {
 	if id <= 0 {
 		return ErrInvalidUserID
 	}
-	query := `DELETE FROM chat_messages WHERE id = $1`
+	query := `DELETE FROM chat_messages WHERE id = ?`
 	_, err := c.db.Exec(query, id)
 	return err
 }
@@ -104,8 +106,7 @@ func (c *ChatService) DeleteMessage(id int) error {
 func (c *ChatService) CleanOldMessages(olderThan time.Duration) (int, error) {
 	query := `
 		DELETE FROM chat_messages
-		WHERE created_at < NOW() - INTERVAL '1 day'
-		RETURNING id
+		WHERE created_at < datetime('now', '-1 day')
 	`
 	result, err := c.db.Exec(query)
 	if err != nil {

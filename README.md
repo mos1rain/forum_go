@@ -53,7 +53,7 @@
 - Покрытие тестами для каждого микросервиса > 80%
 
 ## Swagger-документация
-- Swagger UI доступен по пути `/swagger/` для каждого сервиса (например, http://localhost:8081/swagger/)
+- Swagger UI доступен по пути `/swagger/` для каждого сервиса (например, http://localhost:3001/swagger/)
 - Описание API — в `docs/swagger.yaml` и `docs/swagger.json`
 
 ## Архитектура и требования

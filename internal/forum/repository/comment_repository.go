@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"time"
 
 	"github.com/mos1rain/forum_go/internal/forum/models"
 )
@@ -21,12 +22,26 @@ func NewCommentRepository(db *sql.DB) *CommentRepository {
 }
 
 func (r *CommentRepository) Create(comment *models.Comment) error {
-	query := `INSERT INTO comments (post_id, user_id, content) VALUES ($1, $2, $3) RETURNING id, created_at`
-	return r.db.QueryRow(query, comment.PostID, comment.UserID, comment.Content).Scan(&comment.ID, &comment.CreatedAt)
+	query := `INSERT INTO comments (post_id, user_id, content) VALUES (?, ?, ?)`
+	result, err := r.db.Exec(query, comment.PostID, comment.AuthorID, comment.Content)
+	if err != nil {
+		return err
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return err
+	}
+
+	comment.ID = id
+	comment.CreatedAt = time.Now()
+	comment.UpdatedAt = time.Now()
+
+	return nil
 }
 
 func (r *CommentRepository) GetByPostID(postID int) ([]models.Comment, error) {
-	rows, err := r.db.Query(`SELECT id, post_id, user_id, content, created_at FROM comments WHERE post_id = $1`, postID)
+	rows, err := r.db.Query(`SELECT id, post_id, user_id, content, created_at, updated_at FROM comments WHERE post_id = ?`, postID)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +50,7 @@ func (r *CommentRepository) GetByPostID(postID int) ([]models.Comment, error) {
 	var comments []models.Comment
 	for rows.Next() {
 		var c models.Comment
-		if err := rows.Scan(&c.ID, &c.PostID, &c.UserID, &c.Content, &c.CreatedAt); err != nil {
+		if err := rows.Scan(&c.ID, &c.PostID, &c.AuthorID, &c.Content, &c.CreatedAt, &c.UpdatedAt); err != nil {
 			return nil, err
 		}
 		comments = append(comments, c)
@@ -44,6 +59,6 @@ func (r *CommentRepository) GetByPostID(postID int) ([]models.Comment, error) {
 }
 
 func (r *CommentRepository) Delete(id int) error {
-	_, err := r.db.Exec(`DELETE FROM comments WHERE id = $1`, id)
+	_, err := r.db.Exec(`DELETE FROM comments WHERE id = ?`, id)
 	return err
 }

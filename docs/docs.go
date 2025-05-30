@@ -9,7 +9,16 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "contact": {},
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "http://www.swagger.io/support",
+            "email": "support@swagger.io"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
@@ -17,7 +26,7 @@ const docTemplate = `{
     "paths": {
         "/api/auth/login": {
             "post": {
-                "description": "Аутентификация пользователя",
+                "description": "Authenticate user and get access token",
                 "consumes": [
                     "application/json"
                 ],
@@ -27,10 +36,10 @@ const docTemplate = `{
                 "tags": [
                     "auth"
                 ],
-                "summary": "Вход пользователя",
+                "summary": "User login",
                 "parameters": [
                     {
-                        "description": "Данные для входа",
+                        "description": "Login credentials",
                         "name": "input",
                         "in": "body",
                         "required": true,
@@ -41,25 +50,25 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Login successful",
                         "schema": {
                             "$ref": "#/definitions/service.AuthResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Invalid request data",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "Invalid credentials",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "schema": {
                             "type": "string"
                         }
@@ -69,7 +78,7 @@ const docTemplate = `{
         },
         "/api/auth/register": {
             "post": {
-                "description": "Регистрирует нового пользователя",
+                "description": "Register a new user in the system",
                 "consumes": [
                     "application/json"
                 ],
@@ -79,10 +88,10 @@ const docTemplate = `{
                 "tags": [
                     "auth"
                 ],
-                "summary": "Регистрация пользователя",
+                "summary": "Register new user",
                 "parameters": [
                     {
-                        "description": "Данные пользователя",
+                        "description": "User registration data",
                         "name": "input",
                         "in": "body",
                         "required": true,
@@ -93,25 +102,25 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created",
+                        "description": "User successfully registered",
                         "schema": {
                             "$ref": "#/definitions/service.AuthResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Invalid request data",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "409": {
-                        "description": "Conflict",
+                        "description": "User already exists",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "schema": {
                             "type": "string"
                         }
@@ -121,34 +130,7 @@ const docTemplate = `{
         },
         "/api/forum/categories": {
             "get": {
-                "description": "Получить все категории форума",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "categories"
-                ],
-                "summary": "Получить список категорий",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.Category"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "description": "Создать новую категорию форума",
+                "description": "Get a list of all categories",
                 "consumes": [
                     "application/json"
                 ],
@@ -158,10 +140,39 @@ const docTemplate = `{
                 "tags": [
                     "categories"
                 ],
-                "summary": "Создать категорию",
+                "summary": "Get all categories",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Category"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Create a new category with the provided data",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "categories"
+                ],
+                "summary": "Create a new category",
                 "parameters": [
                     {
-                        "description": "Категория",
+                        "description": "Category object",
                         "name": "category",
                         "in": "body",
                         "required": true,
@@ -176,36 +187,27 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/models.Category"
                         }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "string"
-                        }
                     }
                 }
             }
         },
         "/api/forum/comments": {
             "get": {
-                "description": "Получить все комментарии по post_id",
+                "description": "Get all comments for a specific post",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "comments"
                 ],
-                "summary": "Получить комментарии к посту",
+                "summary": "Get comments by post ID",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "ID поста",
+                        "description": "Post ID",
                         "name": "post_id",
                         "in": "query",
                         "required": true
@@ -220,23 +222,16 @@ const docTemplate = `{
                                 "$ref": "#/definitions/models.Comment"
                             }
                         }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "string"
-                        }
                     }
                 }
             },
             "post": {
-                "description": "Добавить комментарий к посту",
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Create a new comment with the provided data",
                 "consumes": [
                     "application/json"
                 ],
@@ -246,10 +241,10 @@ const docTemplate = `{
                 "tags": [
                     "comments"
                 ],
-                "summary": "Создать комментарий",
+                "summary": "Create a new comment",
                 "parameters": [
                     {
-                        "description": "Комментарий",
+                        "description": "Comment object",
                         "name": "comment",
                         "in": "body",
                         "required": true,
@@ -264,68 +259,40 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/models.Comment"
                         }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "string"
-                        }
                     }
                 }
             }
         },
         "/api/forum/delete_category": {
-            "delete": {
-                "description": "Удалить категорию по id (только для админа)",
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Delete a category by its ID",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "categories"
                 ],
-                "summary": "Удалить категорию",
+                "summary": "Delete a category",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "ID категории",
+                        "description": "Category ID",
                         "name": "id",
                         "in": "query",
                         "required": true
                     }
                 ],
                 "responses": {
-                    "204": {
-                        "description": "No Content",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
+                    "200": {
+                        "description": "Category deleted successfully",
                         "schema": {
                             "type": "string"
                         }
@@ -334,45 +301,35 @@ const docTemplate = `{
             }
         },
         "/api/forum/delete_comment": {
-            "delete": {
-                "description": "Удалить комментарий по id (только для админа)",
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Delete a comment by its ID",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "comments"
                 ],
-                "summary": "Удалить комментарий",
+                "summary": "Delete a comment",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "ID комментария",
+                        "description": "Comment ID",
                         "name": "id",
                         "in": "query",
                         "required": true
                     }
                 ],
                 "responses": {
-                    "204": {
-                        "description": "No Content",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
+                    "200": {
+                        "description": "Comment deleted successfully",
                         "schema": {
                             "type": "string"
                         }
@@ -381,82 +338,13 @@ const docTemplate = `{
             }
         },
         "/api/forum/delete_post": {
-            "delete": {
-                "description": "Удалить пост по id (только для админа)",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "posts"
-                ],
-                "summary": "Удалить пост",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID поста",
-                        "name": "id",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No Content",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/forum/posts": {
-            "get": {
-                "description": "Получить все посты",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "posts"
-                ],
-                "summary": "Получить список постов",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.Post"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            },
             "post": {
-                "description": "Создать новый пост в категории",
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Delete a post by its ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -466,10 +354,71 @@ const docTemplate = `{
                 "tags": [
                     "posts"
                 ],
-                "summary": "Создать пост",
+                "summary": "Delete a post",
                 "parameters": [
                     {
-                        "description": "Пост",
+                        "type": "integer",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Post deleted successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/forum/posts": {
+            "get": {
+                "description": "Get a list of all posts",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "posts"
+                ],
+                "summary": "Get all posts",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Post"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Create a new post with the provided data",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "posts"
+                ],
+                "summary": "Create a new post",
+                "parameters": [
+                    {
+                        "description": "Post object",
                         "name": "post",
                         "in": "body",
                         "required": true,
@@ -484,23 +433,37 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/models.Post"
                         }
-                    },
-                    "400": {
-                        "description": "Bad Request",
+                    }
+                }
+            }
+        },
+        "/api/forum/posts/{id}": {
+            "get": {
+                "description": "Get a post by its ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "posts"
+                ],
+                "summary": "Get post by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
                         "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/models.Post"
                         }
                     }
                 }
@@ -508,26 +471,26 @@ const docTemplate = `{
         },
         "/history": {
             "get": {
-                "description": "Получить последние 50 сообщений чата",
+                "description": "Get last 50 chat messages",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "chat"
                 ],
-                "summary": "Получить историю чата",
+                "summary": "Get chat history",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/main.Message"
+                                "$ref": "#/definitions/service.Message"
                             }
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "schema": {
                             "type": "string"
                         }
@@ -537,70 +500,67 @@ const docTemplate = `{
         },
         "/ws": {
             "get": {
-                "description": "Подключение к чату через WebSocket (ws://localhost:8082/ws)",
+                "description": "Connect to chat via WebSocket (ws://localhost:3003/ws)",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "chat"
                 ],
-                "summary": "WebSocket для чата",
-                "responses": {}
+                "summary": "WebSocket chat connection",
+                "responses": {
+                    "101": {
+                        "description": "Switching Protocols",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
             }
         }
     },
     "definitions": {
-        "main.Message": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "user_id": {
-                    "type": "integer"
-                },
-                "username": {
-                    "type": "string"
-                }
-            }
-        },
         "models.Category": {
+            "description": "Forum category information",
             "type": "object",
             "properties": {
                 "description": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "General topics and discussions"
                 },
                 "id": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 1
                 },
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "General Discussion"
                 }
             }
         },
         "models.Comment": {
+            "description": "Forum comment information",
             "type": "object",
             "properties": {
                 "content": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Great post!"
                 },
                 "created_at": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "2024-03-20T10:00:00Z"
                 },
                 "id": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 1
                 },
                 "post_id": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 1
                 },
                 "user_id": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 1
                 }
             }
         },
@@ -633,28 +593,36 @@ const docTemplate = `{
             }
         },
         "models.Post": {
+            "description": "Forum post information",
             "type": "object",
             "properties": {
                 "category_id": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 1
                 },
                 "content": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "This is the first post in our forum"
                 },
                 "created_at": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "2024-03-20T10:00:00Z"
                 },
                 "id": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 1
                 },
                 "title": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Welcome to the forum"
                 },
                 "updated_at": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "2024-03-20T10:00:00Z"
                 },
                 "user_id": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 1
                 }
             }
         },
@@ -691,18 +659,52 @@ const docTemplate = `{
                     "$ref": "#/definitions/models.User"
                 }
             }
+        },
+        "service.Message": {
+            "description": "Chat message information",
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "example": "Hello, world!"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-03-20T10:00:00Z"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "user_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "username": {
+                    "type": "string",
+                    "example": "john_doe"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "Bearer": {
+            "description": "Type \"Bearer\" followed by a space and JWT token.",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "",
-	Host:             "",
-	BasePath:         "",
-	Schemes:          []string{},
-	Title:            "",
-	Description:      "",
+	Version:          "1.0",
+	Host:             "localhost:3002",
+	BasePath:         "/",
+	Schemes:          []string{"http"},
+	Title:            "Forum Chat API",
+	Description:      "Chat service for the forum application",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

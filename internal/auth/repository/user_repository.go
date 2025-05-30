@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/mos1rain/forum_go/internal/auth/models"
 )
@@ -18,27 +19,34 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 func (r *UserRepository) Create(user *models.User) error {
 	query := `
 		INSERT INTO users (username, email, password_hash, role)
-		VALUES ($1, $2, $3, $4)
-		RETURNING id, created_at, updated_at, role`
+		VALUES (?, ?, ?, ?)`
 
-	err := r.db.QueryRow(
+	result, err := r.db.Exec(
 		query,
 		user.Username,
 		user.Email,
 		user.PasswordHash,
 		user.Role,
-	).Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt, &user.Role)
-
+	)
 	if err != nil {
 		return err
 	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return err
+	}
+
+	user.ID = int(id)
+	user.CreatedAt = time.Now()
+	user.UpdatedAt = time.Now()
 
 	return nil
 }
 
 func (r *UserRepository) GetByUsername(username string) (*models.User, error) {
 	user := &models.User{}
-	query := `SELECT id, username, email, password_hash, created_at, updated_at, role FROM users WHERE username = $1`
+	query := `SELECT id, username, email, password_hash, created_at, updated_at, role FROM users WHERE username = ?`
 
 	err := r.db.QueryRow(query, username).Scan(
 		&user.ID,
@@ -62,7 +70,7 @@ func (r *UserRepository) GetByUsername(username string) (*models.User, error) {
 
 func (r *UserRepository) GetByEmail(email string) (*models.User, error) {
 	user := &models.User{}
-	query := `SELECT id, username, email, password_hash, created_at, updated_at, role FROM users WHERE email = $1`
+	query := `SELECT id, username, email, password_hash, created_at, updated_at, role FROM users WHERE email = ?`
 
 	err := r.db.QueryRow(query, email).Scan(
 		&user.ID,
@@ -86,7 +94,7 @@ func (r *UserRepository) GetByEmail(email string) (*models.User, error) {
 
 func (r *UserRepository) GetByID(id int) (*models.User, error) {
 	user := &models.User{}
-	query := `SELECT id, username, email, password_hash, created_at, updated_at, role FROM users WHERE id = $1`
+	query := `SELECT id, username, email, password_hash, created_at, updated_at, role FROM users WHERE id = ?`
 
 	err := r.db.QueryRow(query, id).Scan(
 		&user.ID,

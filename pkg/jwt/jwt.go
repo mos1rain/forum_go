@@ -9,6 +9,8 @@ import (
 
 var (
 	ErrInvalidToken = errors.New("invalid token")
+	// Секретный ключ для JWT
+	SecretKey = "forum-secret-key-2024" // В продакшене использовать безопасный ключ
 )
 
 type Claims struct {
@@ -70,4 +72,8 @@ func (m *TokenManager) Parse(accessToken string) (*Claims, error) {
 	}
 
 	return claims, nil
+}
+
+func (m *TokenManager) GetSigningKey() string {
+	return m.signingKey
 }

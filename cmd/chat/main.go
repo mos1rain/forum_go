@@ -13,12 +13,12 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/websocket"
-	_ "github.com/lib/pq"
 	_ "github.com/mos1rain/forum_go/docs"
 	"github.com/mos1rain/forum_go/internal/chat/service"
 	"github.com/rs/zerolog"
 	_ "github.com/swaggo/files"
 	httpSwagger "github.com/swaggo/http-swagger"
+	_ "modernc.org/sqlite"
 )
 
 var (
@@ -31,18 +31,11 @@ var (
 	logger = zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().Logger()
 )
 
-// @Summary Получить историю чата
-// @Description Получить последние 50 сообщений чата
-// @Tags chat
-// @Produce json
-// @Success 200 {array} Message
-// @Failure 500 {string} string
-// @Router /history [get]
 func main() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 
-	// Подключение к базе данных
-	db, err := sql.Open("postgres", "postgres://postgres:28072005@localhost:5432/forum?sslmode=disable")
+	// Подключение к SQLite
+	db, err := sql.Open("sqlite", "./forum.db")
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to connect to database")
 	}
@@ -51,6 +44,21 @@ func main() {
 	// Проверка соединения
 	if err := db.Ping(); err != nil {
 		logger.Fatal().Err(err).Msg("Failed to ping database")
+	}
+
+	// Инициализация таблицы chat_messages
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS chat_messages (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			user_id INTEGER NOT NULL,
+			username TEXT NOT NULL,
+			content TEXT NOT NULL,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+		)
+	`)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to initialize chat_messages table")
 	}
 
 	chatService := service.NewChatService(db)
@@ -137,15 +145,10 @@ func main() {
 
 	http.HandleFunc("/swagger/", httpSwagger.WrapHandler)
 
-	logger.Info().Msg("Chat service started on :8082")
-	logger.Fatal().Err(http.ListenAndServe(":8082", nil)).Msg("chat server crashed")
+	logger.Info().Msg("Chat service started on :3003")
+	logger.Fatal().Err(http.ListenAndServe(":3003", nil)).Msg("chat server crashed")
 }
 
-// @Summary WebSocket для чата
-// @Description Подключение к чату через WebSocket (ws://localhost:8082/ws)
-// @Tags chat
-// @Produce json
-// @Router /ws [get]
 func handleWS(chatService *service.ChatService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		conn, err := upgrader.Upgrade(w, r, nil)
@@ -287,25 +290,3 @@ func parseJWT(token string) (map[string]interface{}, error) {
 	}
 	return nil, errors.New("invalid token claims")
 }
-
-// @Summary Отправить сообщение в чат
-// @Description Отправить новое сообщение (только для авторизованных пользователей)
-// @Tags chat
-// @Accept json
-// @Produce json
-// @Param message body Message true "Сообщение"
-// @Success 201 {string} string
-// @Failure 400 {string} string
-// @Failure 500 {string} string
-// @Router /messages [post]
-// @Summary Удалить сообщение чата
-// @Description Удалить сообщение по id (только для админа)
-// @Tags chat
-// @Produce json
-// @Param id query int true "ID сообщения"
-// @Success 204 {string} string
-// @Failure 400 {string} string
-// @Failure 401 {string} string
-// @Failure 403 {string} string
-// @Failure 500 {string} string
-// @Router /delete_message [delete]

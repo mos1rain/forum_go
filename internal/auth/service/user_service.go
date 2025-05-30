@@ -11,6 +11,7 @@ import (
 var (
 	ErrUserAlreadyExists  = errors.New("user already exists")
 	ErrInvalidCredentials = errors.New("invalid credentials")
+	ErrInvalidInput       = errors.New("invalid input")
 )
 
 type UserRepo interface {
@@ -22,6 +23,11 @@ type UserRepo interface {
 
 type TokenManager interface {
 	NewJWTWithRole(userID int, username, role string, ttl time.Duration) (string, error)
+}
+
+type UserServiceInterface interface {
+	Register(input models.CreateUserInput) (*AuthResponse, error)
+	Login(input models.LoginInput) (*AuthResponse, error)
 }
 
 type UserService struct {
